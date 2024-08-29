@@ -12,15 +12,15 @@ internal class Program
     static void Main(string[] args)
     {
         //ChangeTracker();
-        ChangeTrackerV80();
-        //Insert();
+        //ChangeTrackerV80();
+        Insert();
         //Update();
         //UpdateV70();
         //Delete();
         //DeleteV70();
         //Detached();
         //Cascading();
-        //Concurrency();
+        Concurrency();
     }
 
     private static void ChangeTracker()
@@ -70,35 +70,52 @@ internal class Program
     {
         var optionsBuilder = new DbContextOptionsBuilder();
         optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
         var context = new ProductContext(optionsBuilder.Options);
-        var brand = new Brand { Name = "Merk", Website = "https://brand.nl" };
+        context.Database.EnsureDeleted();
+        context.Database.EnsureCreated();
+
+        var pg = new ProductGroup { Name = "Testje" } ;
+        //context.ProductGroups.Add(pg);
+        var brand = new Brand { Name = "Merkie", Website = "https://brand.nl" };
+        //brand.Products.Add(new Product { 
+        //    Name = "Heineken", 
+        //    ProductGroup = pg});
+
         context.Brands.Add(brand);
         ShowStatus(context.Entry(brand));
-
+        Console.WriteLine(context.ChangeTracker.DebugView.LongView);
         context.SaveChanges();
+        Console.WriteLine(context.ChangeTracker.DebugView.LongView);
+        ShowStatus(context.Entry(brand));
     }
 
     private static void Update()
     {
         var optionsBuilder = new DbContextOptionsBuilder();
         optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
+
         var context = new ProductContext(optionsBuilder.Options);
 
         var brand = context.Brands.First(b => b.Name == "Merk");
         brand.Name = "4dotnet";
         ShowStatus(context.Entry(brand));
+
         context.SaveChanges();
+        ShowStatus(context.Entry(brand));
     }
     private static void UpdateV70()
     {
         var optionsBuilder = new DbContextOptionsBuilder();
         optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
         var context = new ProductContext(optionsBuilder.Options);
 
         // No change tracker involved here. Updates directly to the database
         context.Brands.Where(b => b.Name == "Merk")
             .ExecuteUpdate(updates => 
-                updates.SetProperty(m => m.Name, "4dotnet")
+                updates.SetProperty(m => m.Name, m=>m.Name +  "4dotnet")
             );
     }
 
@@ -106,11 +123,15 @@ internal class Program
     {
         var optionsBuilder = new DbContextOptionsBuilder();
         optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
         var context = new ProductContext(optionsBuilder.Options);
-        var brand = context.Brands.First(b => b.Name == "4dotnet");
+        var brand = context.Brands
+            .Include(b=>b.Products)
+            .First(b => b.Name == "Merk");
         context.Remove(brand);
         ShowStatus(context.Entry(brand));
         context.SaveChanges();
+        ShowStatus(context.Entry(brand));
     }
     private static void DeleteV70()
     {
@@ -177,6 +198,7 @@ internal class Program
     {
         var optionsBuilder = new DbContextOptionsBuilder();
         optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.LogTo(Console.WriteLine, Microsoft.Extensions.Logging.LogLevel.Information);
         var context = new ProductContext(optionsBuilder.Options);
         var brand = new Brand { Name = "Merk", Website = "https://brand.nl" };
         context.Brands.Add(brand);
@@ -185,6 +207,15 @@ internal class Program
         Console.WriteLine("Press Enter to continue");
         Console.ReadLine();
         brand.Name = "Random Merk";
+        //try
+        //{
+        //    context.SaveChanges();
+        //}
+        //catch (DbUpdateConcurrencyException ex)
+        //{
+        //    ex.Entries
+        //}
+
         for (int i = 0; i < 3; i++)
         {
             try
@@ -201,7 +232,8 @@ internal class Program
                     var dbValues = entry.GetDatabaseValues()!;
                     Console.WriteLine($"In database: {dbValues["Name"]}. Your value: {myValues["Name"]}");
                     // Database Wins
-                    entry.CurrentValues.SetValues(dbValues);
+                    //entry.CurrentValues.SetValues(dbValues);
+                    
                     // Client wins
                     entry.OriginalValues.SetValues(dbValues);
                 }

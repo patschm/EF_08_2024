@@ -12,8 +12,8 @@ internal class Program
     
     static void Main()
     {
-        Exercise1();
-        //Exercise2();
+        //Exercise1();
+        Exercise2();
         //Exercise3();
         //Exercise4();
         //Exercise5();
@@ -30,7 +30,7 @@ internal class Program
         // Uncomment the method call an test the query
         
         //var query = ctx.Brands.OrderByDescending(b => b.Name);
-        var query = from b in ctx.Brands orderby b.Name select b;
+        var query = from b in ctx.Brands orderby b.Name descending select b;
         
         foreach (var item in query)
         {
@@ -136,19 +136,20 @@ internal class Program
         // Do it both with Extensions and Integrated.
         // Uncomment the method call an test the query
 
-        //var query = ctx.Brands.Join(
-        //        ctx.Products,
-        //        b => b.Id,
-        //        p => p.BrandId,
-        //        (b, p) => new { BrandName = b.Name, ProductName = p.Name })
-        //    .GroupBy(x => x.BrandName)
-        //    .Select(it => new { BrandName = it.Key, Products = it.ToList() });
+        var query = ctx.Brands
+            .Join(
+                ctx.Products,
+                b => b.Id,
+                p => p.BrandId,
+                (b, p) => new { BrandName = b.Name, ProductName = p.Name })
+            .GroupBy(x => x.BrandName)
+            .Select(it => new { BrandName = it.Key, Products = it.ToList() });
 
-        var query = from b in ctx.Brands
-                    join p in ctx.Products on b.Id equals p.BrandId
-                    select new { BrandName = b.Name, ProductName = p.Name } into it
-                    group it by it.BrandName into grp
-                    select new { BrandName = grp.Key, Products = grp.ToList() };
+        //var query = from b in ctx.Brands
+        //            join p in ctx.Products on b.Id equals p.BrandId
+        //            select new { BrandName = b.Name, ProductName = p.Name } into it
+        //            group it by it.BrandName into grp
+        //            select new { BrandName = grp.Key, Products = grp.ToList() };
 
         foreach (var item in query)
         {

@@ -22,6 +22,8 @@ internal class Program
         optionsBuilder.UseSqlServer(connectionString);
         var context = new ProductContext(optionsBuilder.Options);
 
+       
+
         var pat = new SqlParameter("pat", "C");
         var brands = context.Brands.FromSqlRaw("SELECT * FROM Core.Brands WHERE [Name] LIKE @pat+'%'", pat);
         foreach (var brand in brands)
