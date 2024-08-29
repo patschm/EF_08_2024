@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 namespace DemoPerformance;
 
-internal class ProductContext : DbContext
+public class ProductContext : DbContext
 {
     // For Compiled models
     public ProductContext(): base()

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using BenchmarkDotNet.Running;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
@@ -16,7 +17,24 @@ internal class Program
         //Diagnostics();
         //ConnectionPooling();
         //CompiledModels();
-        CompiledQueries();         
+        //CompiledQueries();
+        BenchmarkSwitcher.FromTypes([typeof(BenchMarking)]).RunAll();
+
+        //PerformanceCounters();
+
+    }
+
+    private static void PerformanceCounters()
+    {
+        // From EF 9.0 on
+        // dotnet tool install --global dotnet-counters
+        Console.WriteLine("Determine process ID and run:");
+        var process = Process.GetCurrentProcess();
+        Console.WriteLine($"dotnet counters monitor Microsoft.EntityFrameworkCore -p {process.Id}");
+        Console.WriteLine("Then press enter to continue");
+        Console.ReadLine();
+        CompiledModels();
+        Console.ReadLine();
     }
 
     private static void Diagnostics()
