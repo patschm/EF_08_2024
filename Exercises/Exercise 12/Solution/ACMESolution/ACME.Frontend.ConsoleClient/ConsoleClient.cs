@@ -33,7 +33,7 @@ internal class ConsoleClient : IHostedService
                        BoolValue = s.BoolValue,
                        NumberValue = s.NumberValue
                    })
-                .Where(p => p.ProductId == 1)
+                .Where(p => p.ProductId == id)
                 .Select(p=>p)
         );
 
@@ -67,7 +67,7 @@ internal class ConsoleClient : IHostedService
         //    .Select(p => p);
 
         var data = cquery.Invoke(_dbContext, 1);
-        var query = data.ToList().GroupBy(p => new { p.ProductName, p.Brand });
+        var query = data.GroupBy(p => new { p.ProductName, p.Brand });
         foreach(var item in query)
         {
             Console.WriteLine($"{item.Key.Brand} {item.Key.ProductName}");
