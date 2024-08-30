@@ -6,6 +6,6 @@ public class Price: Entity
     public double BasePrice { get; set; }
     public string? ShopName { get; set; }
     public DateTime PriceDate { get; set; }
-    
+    public byte[]? Timestamp { get; set; }
     public virtual Product Product { get; set; } = null!;
 }

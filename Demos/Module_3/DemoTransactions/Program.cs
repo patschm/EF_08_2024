@@ -13,7 +13,7 @@ internal class Program
     
     static void Main(string[] args)
     {
-        //LocalTransactions();
+       //LocalTransactions();
         //MultiContexts();
         //MixedLocalTransactions();
        //DistributedTransactions();
@@ -34,6 +34,7 @@ internal class Program
 
         using (var tran = context.Database.BeginTransaction())
         {
+            Console.WriteLine(Transaction.Current);
             context.Brands.Add(brand1);
             context.SaveChanges();
             context.Brands.Add(brand2);
@@ -137,17 +138,22 @@ internal class Program
 
         var brand1 = new Brand { Name = "Brand 1", Website = "https://www.brand_1.nl" };
         var brand2 = new Brand { Name = "Brand 2", Website = "https://www.brand_2.nl" };
+         var brand3 = new Brand { Name = "Brand 1", Website = "https://www.brand_1.nl" };
+        var brand4 = new Brand { Name = "Brand 2", Website = "https://www.brand_2.nl" };
 
+        TransactionManager.ImplicitDistributedTransactions = true;
         using (var transaction = new TransactionScope(
                 TransactionScopeOption.Required,
                 new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted }))
         {
+            Console.WriteLine(Transaction.Current.TransactionInformation.DistributedIdentifier);
+            Console.WriteLine(Transaction.Current.TransactionInformation.LocalIdentifier);
             context.Brands.Add(brand1);
             context.Brands.Add(brand2);
             context.SaveChanges();
-
-            context2.Brands.Add(brand1);
-            context2.Brands.Add(brand2);
+            
+            context2.Brands.Add(brand3);
+            context2.Brands.Add(brand4);
             context2.SaveChanges();
 
             transaction.Complete();
@@ -166,7 +172,7 @@ internal class Program
     {
         // Savepoints are incompatible with SQL Server's Multiple Active Result Sets, and are not used.
         // If an error occurs during SaveChanges, the transaction may be left in an unknown state.
-        string conString = @"Server=.\SQLEXPRESS;Database=ShopDatabase;Trusted_Connection=True;";
+        string conString = @"Server=.\SQLEXPRESS;Database=ShopDatabase;Trusted_Connection=True;TrustServerCertificate=true;";
         var optionsBuilder = new DbContextOptionsBuilder();
         optionsBuilder.UseSqlServer(conString);
         var context = new ProductContext(optionsBuilder.Options);
@@ -189,8 +195,8 @@ internal class Program
         {
             tran.RollbackToSavepoint("After_Brand_1");
             // Fix problem entity
-            context.Remove(brand2);
-            context.SaveChanges();
+           // context.Remove(brand2);
+            //context.SaveChanges();
             tran.Commit();
         }
 
@@ -227,13 +233,14 @@ internal class Program
 
         var writeAction = new Task(() => {
             var brand = new Brand { Name = "Brand 1", Website = "https://www.brand_2.nl" };
+            //context2.Database.UseTransaction(writeTransaction.GetDbTransaction());
             context2.Brands.Add(brand);
             context2.SaveChanges();
 
             Console.WriteLine("Waiting 1 seconds for commit");
             Task.Delay(1000).Wait();
 
-            writeTransaction.Commit();
+            writeTransaction.Rollback();
         });
 
         var readData = Task.Run(() => {
@@ -252,13 +259,14 @@ internal class Program
             {
                 Console.WriteLine(b.Name);
             }
-            readTransaction.Commit();
+            //readTransaction.Commit();
         });
 
-        Task.Delay(10000).Wait();
-        var brand = context1.Brands.First(b => b.Name == "Brand 1");
-        context1.Remove(brand);
-        context1.SaveChanges();
+        //Task.Delay(10000).Wait();
+        //var brand = context1.Brands.First(b => b.Name == "Brand 1");
+        //context1.Remove(brand);
+        //context1.SaveChanges();
+        Console.ReadLine();
     }
     private static void NonRepeatableReads()
     {
@@ -279,7 +287,7 @@ internal class Program
         });
 
         var readData = Task.Run(() => {
-            var isoLevel = System.Data.IsolationLevel.ReadCommitted;
+            var isoLevel = System.Data.IsolationLevel.RepeatableRead;
             using var readTransaction = context1.Database.BeginTransaction(isoLevel);
             var query = context1.Brands.AsNoTracking();
 
@@ -324,7 +332,7 @@ internal class Program
         var readData = Task.Run(() => {
             var isoLevel = System.Data.IsolationLevel.RepeatableRead;
             using var readTransaction = context1.Database.BeginTransaction(isoLevel);
-            var query = context1.Brands.Where(b=>b.Id > 50).AsNoTracking();
+            var query = context1.Brands.Where(b=>b.Id > 0).AsNoTracking();
 
             foreach (var b in query)
             {
@@ -333,6 +341,12 @@ internal class Program
             insertData.Start();
 
             Task.Delay(1000).Wait();
+            Console.WriteLine("==== Read again");
+            foreach (var b in query)
+            {
+                Console.WriteLine(b.Name);
+            }
+            Task.Delay(10000).Wait();
             Console.WriteLine("==== Read again");
             foreach (var b in query)
             {

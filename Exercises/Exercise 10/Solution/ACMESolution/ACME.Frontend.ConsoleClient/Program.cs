@@ -56,6 +56,7 @@ internal class Program
             ProductId = 1
         };
 
+        TransactionManager.ImplicitDistributedTransactions = true;
         // TODO 3: Wrap both SaveChanges in a distributed transaction
         using (var scope = new TransactionScope())
         {

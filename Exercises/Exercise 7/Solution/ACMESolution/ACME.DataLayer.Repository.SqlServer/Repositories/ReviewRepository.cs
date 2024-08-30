@@ -45,14 +45,16 @@ public class ReviewRepository : IReviewRepository
         // TODO 5: Implement this method until the corrsponding test succeeds
         return await _context.Reviews.FirstAsync(r=>r.Id == id);
     }
-    public async Task InsertAsync(Review entity)
+    public Task InsertAsync(Review entity)
     {
         // TODO 6: Implement this method until the corrsponding test succeeds
-        await _context.Reviews.AddAsync(entity);
+        _context.Reviews.Add(entity);
+        return Task.CompletedTask;
     }
     public async Task UpdateAsync(Review entity)
     {
         // TODO 7: Implement this method until the corrsponding test succeeds
+        //_context.Reviews.Update
         var dbEntity = await _context.Reviews.FindAsync(entity.Id);
         if (dbEntity != null)
             _context.Entry(dbEntity).CurrentValues.SetValues(entity);

@@ -8,6 +8,7 @@ public class MyConnectionInterceptor: DbConnectionInterceptor
     public override void ConnectionOpened(DbConnection connection, ConnectionEndEventData eventData)
     {
         Console.WriteLine("Whoehoeee. The connection is opened");
+        Console.WriteLine(connection.ConnectionString);
         base.ConnectionOpened(connection, eventData);
     }
     public override void ConnectionClosed(DbConnection connection, ConnectionEndEventData eventData)

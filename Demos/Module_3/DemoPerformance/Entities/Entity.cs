@@ -5,6 +5,6 @@ namespace DemoPerformance;
 public class Entity
 {
     public long Id { get; set; }
-    [Timestamp]
+    //[Timestamp]
     public byte[]? Timestamp { get; set; }
 }

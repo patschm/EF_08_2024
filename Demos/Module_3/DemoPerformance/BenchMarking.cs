@@ -1,50 +1,53 @@
 ﻿using BenchmarkDotNet.Attributes;
-using Microsoft.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace DemoPerformance;
 
 [MemoryDiagnoser]
-[MaxIterationCount(200)]
+//[MaxIterationCount(200)]
 public class BenchMarking
 {
-    public static string connectionString = @"Server=.\SQLEXPRESS;Database=ShopDatabase;Trusted_Connection=True;TrustServerCertificate=true;MultipleActiveResultSets=true;Encrypt=False";
+    public static string connectionString = Program.connectionString;
+    private DbContextOptions optionsCompiled;
+    private DbContextOptions options;
+    private ProductContext contextCompiled;
+    private ProductContext context;
+
+    [GlobalSetup]
+    public void Setup()
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<ProductContext>();
+        optionsBuilder.UseSqlServer(connectionString);
+        options = optionsBuilder.Options;
+        context = new ProductContext(options);
+        contextCompiled = new ProductContext(options);
+
+        optionsBuilder = new DbContextOptionsBuilder<ProductContext>();
+        optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseModel(ProductContextModel.Instance);
+        optionsCompiled = optionsBuilder.Options;
+    }
 
     [Benchmark]
     public ProductContext NormalInit()
     {
-        var optionsBuilder = new DbContextOptionsBuilder<ProductContext>();
-        optionsBuilder.UseSqlServer(connectionString);
-        var options = optionsBuilder.Options;
         var context = new ProductContext(options);
+        context.ProductGroups.First();
         return context;
     }
 
     [Benchmark]
     public ProductContext NormalCompiledModelInit()
     {
-        var optionsBuilder = new DbContextOptionsBuilder<ProductContext>();
-        optionsBuilder.UseSqlServer(connectionString);
-        optionsBuilder.UseModel(ProductContextModel.Instance);
-        var options = optionsBuilder.Options;
-        var context = new ProductContext(options);
+        var context = new ProductContext(optionsCompiled);
+        context.ProductGroups.First();
         return context;
     }
 
     [Benchmark]
     public List<ProductGroup> NormalQuery()
     {
-        var optionsBuilder = new DbContextOptionsBuilder<ProductContext>();
-        optionsBuilder.UseSqlServer(connectionString);
-        var options = optionsBuilder.Options;
-        var context = new ProductContext(options);
-    
         var query = context.ProductGroups
            .Include(pg => pg.Products)
                .ThenInclude(p => p.Brand)
@@ -62,11 +65,6 @@ public class BenchMarking
     [Benchmark]
     public List<ProductGroup> CompiledQuery()
     {
-        var optionsBuilder = new DbContextOptionsBuilder<ProductContext>();
-        optionsBuilder.UseSqlServer(connectionString);
-        var options = optionsBuilder.Options;
-
-        var context = new ProductContext(options);
-        return _compiled(context).ToList();
+        return _compiled(contextCompiled).ToList();
     }
 }

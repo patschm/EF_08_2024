@@ -1,28 +1,24 @@
 ﻿using DemoLogging.Interceptors;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Diagnostics.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Primitives;
 using System.Diagnostics;
 
 namespace DemoLogging;
 
 internal class Program
 {
-    public static string connectionString = @"Server=.\SQLEXPRESS;Database=ShopDatabase;Trusted_Connection=True;TrustServerCertificate=true;MultipleActiveResultSets=true;Encrypt=False";
+    public static string connectionString = @"Server=.\SQLEXPRESS;Database=ProductCatalog;Trusted_Connection=True;TrustServerCertificate=true;MultipleActiveResultSets=true;Encrypt=False";
 
     static void Main(string[] args)
     {
-        Simple();
+        //Simple();
         //Extensions();
         //Events();
         //DiagnosticListeners();
-        //Interceptors();
+        Interceptors();
     }
 
     private static void Simple()
@@ -86,7 +82,7 @@ internal class Program
         {
             Console.WriteLine($"Tracking {e.Entry}");
         };
-
+        Task.Delay(1000).Wait();
         foreach (var group in context.ProductGroups)
         {
             Console.WriteLine($"* {group.Name}");
@@ -107,6 +103,8 @@ internal class Program
         {
             Console.WriteLine($"* {group.Name}");
         }
+
+        Console.ReadLine();
     }
     private static void Interceptors()
     {

@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics;
 
 namespace Kweerie;
 
@@ -6,11 +7,14 @@ class Program
 {
     static void Main(string[] args)
     {
+       //var process = Process.GetCurrentProcess();
+        //Console.WriteLine($"dotnet counters monitor Microsoft.EntityFrameworkCore -p {process.Id}");
+        //Console.ReadLine();
         //Extentions();
         //Link
         //Navigatie();
-        //ChangeTracker();
-        NewChangeTracker();
+        ChangeTracker();
+        //NewChangeTracker();
 
         Console.ReadLine();
     }

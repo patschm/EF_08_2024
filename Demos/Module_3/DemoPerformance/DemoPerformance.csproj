@@ -18,8 +18,4 @@
     <PackageReference Include="System.Formats.Asn1" Version="8.0.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="CompiledModels\" />
-  </ItemGroup>
-
 </Project>

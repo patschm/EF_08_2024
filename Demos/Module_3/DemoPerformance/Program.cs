@@ -10,17 +10,17 @@ namespace DemoPerformance;
 
 internal class Program
 {
-    public static string connectionString = @"Server=.\SQLEXPRESS;Database=ShopDatabase;Trusted_Connection=True;TrustServerCertificate=true;MultipleActiveResultSets=true;Encrypt=False";
+    public static string connectionString = @"Server=.\SQLEXPRESS;Database=ProductCatalog;Trusted_Connection=True;TrustServerCertificate=true;MultipleActiveResultSets=true;Encrypt=False";
 
     static void Main(string[] args)
     {
         //Diagnostics();
         //ConnectionPooling();
-        //CompiledModels();
+       // CompiledModels();
         //CompiledQueries();
-        BenchmarkSwitcher.FromTypes([typeof(BenchMarking)]).RunAll();
+        //BenchmarkSwitcher.FromTypes([typeof(BenchMarking)]).RunAll();
 
-        //PerformanceCounters();
+        PerformanceCounters();
 
     }
 
@@ -52,9 +52,9 @@ internal class Program
         // 5) Use Sql Server Profiles Tool (Tuning Advisor) to get advise for Indices
         var query = context.ProductGroups
             .Include(pg => pg.Products)
-                .ThenInclude(p => p.Brand).AsSplitQuery()
+                .ThenInclude(p => p.Brand)//.AsSplitQuery()
             .Include(pg => pg.Products)
-                .ThenInclude(p => p.Reviews).AsSplitQuery()
+                .ThenInclude(p => p.Reviews)//.AsSplitQuery()
             .TagWith("Very big one!");
        
         foreach(var group in query)
@@ -120,6 +120,10 @@ internal class Program
         var optionsBuilder2 = new DbContextOptionsBuilder<ProductContext>();
         optionsBuilder2.UseSqlServer(connectionString);
         var options2 = optionsBuilder.Options;
+        var contextx = new ProductContext(options2);
+        contextx = new ProductContext(options);
+        contextx.Dispose();
+
 
         var timers = new Dictionary<string, TimeSpan>() { { "normal", TimeSpan.Zero }, { "compiled", TimeSpan.Zero } };
         for (int j = 0; j < 20; j++)
@@ -129,6 +133,7 @@ internal class Program
             for (int i = 0; i < 100; i++)
             {
                 var context = new ProductContext(options2);
+                context.ProductGroups.First();
             }
             watch.Stop();
             timers["normal"] += watch.Elapsed;
@@ -138,6 +143,7 @@ internal class Program
             for (int i = 0; i < 100; i++)
             {
                 var context = new ProductContext(options);
+                context.ProductGroups.First();
             }
             watch.Stop();
             timers["compiled"] += watch.Elapsed;
@@ -171,21 +177,24 @@ internal class Program
             watch.Start();
             for (int i = 0; i < 100; i++)
             {
+                var dt = _compiled(context);
+            }
+            watch.Stop();
+            timers["compiled"] += watch.Elapsed;
+
+            watch.Reset();
+
+            watch.Start();
+            for (int i = 0; i < 100; i++)
+            {
                 var dt = query.ToList();        
             }
             watch.Stop();
             timers["normal"] += watch.Elapsed;
             watch.Reset();
 
-            watch.Start();
-            for (int i = 0; i < 100; i++)
-            {
-                var dt = _compiled(context);
-            }
-            watch.Stop();
-            timers["compiled"] += watch.Elapsed;
-        }
-        Console.WriteLine($"Without compiled models: It took on average {timers["normal"] / 20} seconds");
-        Console.WriteLine($"With compiled models: It took on average {timers["compiled"] / 20} seconds");
+                   }
+        Console.WriteLine($"Without compiled queries: It took on average {timers["normal"] / 20} seconds");
+        Console.WriteLine($"With compiled queries: It took on average {timers["compiled"] / 20} seconds");
     }
 }
